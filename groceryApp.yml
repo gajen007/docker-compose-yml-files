@@ -1,0 +1,118 @@
+# THIS IS FOR LINUX DEPLOYMENT ONLY!
+# RENAME THIS FILE AS docker-compose.yml
+# Create a .env file as following and remove hash before save it.
+
+#MYSQL_ROOT_PASSWORD=gajen123
+#MYSQL_DATABASE=groceryDB
+#DB_HOST=mysql-db
+#DB_PORT=3306
+#DB_USER=root
+#DB_PASSWORD=gajen123
+#DB_NAME=groceryDB
+#NEXT_PUBLIC_API_URL=http://backend:3000
+
+#Install Docker AND DOCKER-COMPOSE
+#RUN THE docker compose up COMMAND inside the directory where this yml file and your .env file are
+#Open your browser with THREE WINDOWS (OR TABS) and browse the URLs 
+#http://localhost:3001
+#http://localhost:3002
+#http://localhost:3003
+
+#You will see Customer, Admin & Driver Frontend pages respectively!
+#Login Admin-Page as admin@gmail.com and admin123
+
+services:
+  mysql-db:
+    build:
+      context: https://github.com/gajen007/GroceryAppSQLdatabase.git
+      dockerfile: .Dockerfile
+    container_name: grocery-mysql-db
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - grocery-net
+
+  backend:
+    build:
+      context: https://github.com/gajen007/publicGroceryStoreNodeJS.git#withChatFeature
+      dockerfile: .Dockerfile
+    container_name: grocery-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+    networks:
+      - grocery-net
+
+  customer-frontend:
+    build:
+      context: https://github.com/gajen007/groceryCustomer.git#withChatFeature
+      dockerfile: .Dockerfile
+      args:
+        WEB_PORT: 3001
+    container_name: grocery-customer-frontend
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      EXPO_PUBLIC_API_URL: http://localhost:3000
+    depends_on:
+      - backend
+    networks:
+      - grocery-net
+
+  admin-frontend:
+    build:
+      context: https://github.com/gajen007/publicGroceryAdmin.git#withChatFeature
+      dockerfile: .Dockerfile
+      args:
+        WEB_PORT: 3002
+    container_name: grocery-admin-frontend
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    environment:
+      EXPO_PUBLIC_API_URL: http://localhost:3000
+    depends_on:
+      - backend
+    networks:
+      - grocery-net
+
+  driver-frontend:
+    build:
+      context: https://github.com/gajen007/publicGroceryDriver.git#withChatFeature
+      dockerfile: .Dockerfile
+      args:
+        WEB_PORT: 3003
+    container_name: grocery-driver-frontend
+    restart: unless-stopped
+    ports:
+      - "3003:3003"
+    environment:
+      EXPO_PUBLIC_API_URL: http://localhost:3000
+    depends_on:
+      - backend
+    networks:
+      - grocery-net
+
+networks:
+  grocery-net:
+    driver: bridge
