@@ -1,0 +1,73 @@
+# THIS IS FOR LINUX DEPLOYMENT ONLY!
+
+# Create a .env file as following and remoke hash before save it.
+
+# MYSQL_ROOT_PASSWORD=gajen123
+# MYSQL_DATABASE=truckDelivery
+# DB_HOST=database
+# DB_PORT=3306
+# DB_USER=root
+# DB_PASSWORD=gajen123
+# DB_NAME=truckDelivery
+# NEXT_PUBLIC_API_URL=http://backend:3000
+
+#Install Docker AND DOCKER-COMPOSE
+#RUN THE docker compose up COMMAND inside the directory where this yml file and your .env file are
+#Open your browser and browse http://localhost:3000
+#That's all!
+
+services:
+  frontend:
+    build:
+      context: https://github.com/gajen007/TruckDeliveryAppNextJsFrontend.git
+      dockerfile: .Dockerfile
+    container_name: frontend
+    ports:
+      - "3001:3001"
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+  backend:
+    build:
+      context: https://github.com/gajen007/TruckDeliveryAppNodeJSbackend.git
+      dockerfile: .Dockerfile
+    container_name: backend
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  database:
+    build:
+      context: https://github.com/gajen007/TruckDeliveryAppSQLdatabase.git
+      dockerfile: .Dockerfile
+    container_name: database
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
