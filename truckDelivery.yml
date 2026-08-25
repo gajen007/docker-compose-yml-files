@@ -1,5 +1,5 @@
 # THIS IS FOR LINUX DEPLOYMENT ONLY!
-
+# RENAME THIS FILE AS docker-compose.yml
 # Create a .env file as following and remoke hash before save it.
 
 # MYSQL_ROOT_PASSWORD=gajen123
@@ -13,7 +13,7 @@
 
 #Install Docker AND DOCKER-COMPOSE
 #RUN THE docker compose up COMMAND inside the directory where this yml file and your .env file are
-#Open your browser and browse http://localhost:3000
+#Open your browser and browse http://localhost:3001
 #That's all!
 
 services:
